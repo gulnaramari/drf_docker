@@ -1,17 +1,17 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.schemas import openapi
 from rest_framework.views import APIView
 from .models import Payment, User, Subscription
 from .permissions import IsUser, IsOwner, IsUserOwner
 from .serializers import PaymentSerializer, UserBaseSerializer, UserSerializer, SubscriptionSerializer, \
     CustomUserSerializer
-
+from .services import create_product, create_price, create_session
 from edu_materials.models import Course
 
 
@@ -87,6 +87,16 @@ class PaymentCreateAPIView(generics.CreateAPIView):
 
     serializer_class = PaymentSerializer
 
+    def perform_create(self, serializer):
+        """Метод вносит изменение в сериализатор создания платежа"""
+
+        payment = serializer.save(user=self.request.user)
+        product_id = create_product(payment)
+        price = create_price(payment, product_id)
+        session_id, session_url = create_session(price)
+        payment.session_id = session_id
+        payment.payment_link = session_url
+        payment.save()
 
 
 class PaymentUpdateAPIView(generics.UpdateAPIView):
@@ -111,7 +121,13 @@ class SubscriptionView(APIView):
     serializer_class = SubscriptionSerializer
     permission_classes = [IsAuthenticated | IsAuthenticated & IsOwner]
 
-
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["course"],
+            properties={"course": openapi.Schema(type=openapi.TYPE_INTEGER)},
+        )
+    )
     def post(self, *args, **kwargs):
         """Метод для отправки запроса на создание или
         удаление подписки пользователя на курс."""

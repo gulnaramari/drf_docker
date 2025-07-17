@@ -38,6 +38,20 @@ class CourseViewSet(viewsets.ModelViewSet):
         new_course = serializer.save(owner=self.request.user)
         new_course.save()
 
+    def perform_update(self, serializer):
+        """Метод обновления курса.
+        Уведомление об обновлении отправляется только в том случае,
+         если курс не обновлялся более четырех часов"""
+
+        course = serializer.save()
+        if course.updated_at:
+            time_difference = timezone.now() - course.updated_at
+            if time_difference > timedelta(hours=4):
+                send_course_update.delay(course)
+        else:
+            send_course_update.delay(course)
+        course.updated_at = timezone.now()
+        course.save()
 
     def get_queryset(self):
         """Метод для изменения запроса к базе данных по объектам модели "Курса"."""
@@ -95,7 +109,22 @@ class LessonUpdateAPIView(generics.UpdateAPIView):
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated & IsModerator | IsAuthenticated & IsOwner]
 
+    def perform_update(self, serializer):
+        """Метод вносит изменение в сериализатор редактирования "Урока"."""
 
+        lesson = serializer.save()
+        courses = Course.objects.filter(pk=lesson.course.pk)
+        for course in courses:
+            if lesson.updated_at:
+                time_difference = timezone.now() - lesson.updated_at
+                if time_difference > timedelta(hours=3):
+                    send_course_update.delay(course.pk)
+            else:
+                send_course_update.delay(course.pk)
+
+        lesson.updated_at = timezone.now()
+        courses.updated_at = timezone.now()
+        lesson.save()
 
 
 
