@@ -1,29 +1,21 @@
 version: '3.9'
 
 
-
 services:
 
 
-  drf_docker:
+  web:
     build: .
-    command:
-      - /bin/sh
-      - -c
-      - |
-        python manage.py migrate
-        python manage.py createadmin
-        python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/app
-      - static_volume:/app/static
-      - media_volume:/app/media
+      - .:/code
+      - static_volume:/code/static
     ports:
       - "8000:8000"
     depends_on:
       - db
     env_file:
-      - .env
+      - ./.env
 
   db:
     image: postgres:15
@@ -66,12 +58,12 @@ services:
     depends_on:
       - db
       - redis
-      - hw_drf
+      - web
 
   celery_beat:
     build: .
     command: >
-      bash -c "celery -A HW_skypro_Django_REST_Framework beat --loglevel=info"
+      bash -c "celery -A config beat --loglevel=info"
     volumes:
       - .:/app
     env_file:
@@ -80,8 +72,7 @@ services:
       - db
       - redis
       - celery
-      - hw_drf
-
+      - web
 
 
 volumes:
