@@ -9,7 +9,7 @@ from users.permissions import IsModerator, IsOwner
 from .paginators import LMSPagination
 from .models import Course, Lesson
 from .serializers import CourseSerializer, LessonSerializer, DocNoPermissionSerializer
-
+from users.tasks import send_course_update, test_add
 
 
 @method_decorator(name='list', decorator=swagger_auto_schema(
@@ -48,6 +48,8 @@ class CourseViewSet(viewsets.ModelViewSet):
             time_difference = timezone.now() - course.updated_at
             if time_difference > timedelta(hours=4):
                 send_course_update.delay(course)
+                test_add.delay()
+
         else:
             send_course_update.delay(course)
         course.updated_at = timezone.now()
@@ -55,7 +57,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Метод для изменения запроса к базе данных по объектам модели "Курса"."""
-        if self.request.user.groups.filter(name="Модератор").exists():
+        if self.request.user.groups.filter(name="moderators").exists():
             return Course.objects.all()
         return Course.objects.filter(owner=self.request.user)
 

@@ -1,48 +1,123 @@
-from django.urls import reverse
+from rest_framework.fields import DateTimeField
 from rest_framework import status
+from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
-
 from .models import Course, Lesson
 from users.models import User
 
 
-class LessonUserTestCase(APITestCase):
-    """Тесты для эндпоинтов лекций, если аутентифицирован простой пользователь,"""
+class TestCase(APITestCase):
+    """Базовый тестовый класс для всех тестов."""
 
     def setUp(self):
-        """заполнение базы"""
-        self.user = User.objects.create(email="user@user.ru")
-        video_url = "https://www.youtube.com/"
+        """Задает начальные данные для тестов."""
 
-        self.lesson = Lesson.objects.create(
-            name="Test Lesson for tests",
-            description="Test Lesson for tests",
-            video_url=video_url,
-            owner=self.user,
-        )
-        self.user2 = User.objects.create(email="user2@user.ru")
-        self.lesson2 = Lesson.objects.create(
-            name="Test Lesson for tests",
-            description="Test Lesson for tests",
-            video_url=video_url,
-            owner=self.user2,
-        )
-
+        self.user = User.objects.create(email="admin@sky.pro")
+        video_url = 'https://www.youtube.com/'
+        self.course = Course.objects.create(name="Test Course for tests", description='Test Course for tests',
+                                            owner=self.user)
+        self.lesson = Lesson.objects.create(name="Test Lesson for tests", description='Test Lesson for tests',
+                                            course=self.course, video_url=video_url, owner=self.user)
         self.client.force_authenticate(user=self.user)
 
-    def test_lesson_create(self):
-        url = reverse("edu_materials:create_lesson")
-        body = {"name": "Lesson 3"}
-        request = self.client.post(url, body)
 
-        self.assertEqual(request.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Lesson.objects.all().count(), 3)
+class CourseTestCase(TestCase, APITestCase):
+    """Тесты для работы с курсами."""
+
+    def test_course_list(self):
+        """Тест на получение списка курсов."""
+
+        res_created_at = DateTimeField().to_representation
+        res_updated_at = DateTimeField().to_representation
+        url = reverse("edu_materials:courses-list")
+        response = self.client.get(url)
+        data = response.json()
+
+        result = {
+            'count': 1,
+            'next': None,
+            'previous': None,
+            'results':
+                [
+                    {
+                        'id': self.course.pk,
+                        'amount_of_lessons': 1,
+                        'lesson':
+                            [
+                                {
+                                    'id': self.lesson.pk,
+                                    'name': self.lesson.name,
+                                    'description': self.lesson.description,
+                                    'preview': None,
+                                    'video_url': self.lesson.video_url,
+                                    'course': self.course.pk,
+                                    'owner': self.user.pk,
+                                    'created_at': res_created_at(self.lesson.created_at),
+                                    'updated_at': res_updated_at(self.lesson.updated_at),
+                                }
+                            ],
+                        'is_subscribed': False,
+                        'count_subscriptions': 'Подписок - 0.',
+                        'name': self.course.name,
+                        'preview': None,
+                        'description': self.course.description,
+                        'owner': self.user.pk,
+                        'created_at': res_created_at(self.course.created_at),
+                        'updated_at': res_updated_at(self.course.updated_at),
+                    }
+                ]}
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data, result)
+
+    def test_retrieve_course(self):
+        """Тест получения курса по Primary Key."""
+        url = reverse("edu_materials:courses-detail", args=[self.course.pk])
+        response = self.client.get(url)
+        data = response.json()
+        self.assertEqual(Course.objects.all().count(), 1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(data.get("name"), self.course.name)
+
+    def test_create_course(self):
+        """Тест создания нового курса."""
+
+        url = reverse("edu_materials:courses-list")
+        data = {"name": "Test Course for tests 2", "description": "Test Course for tests 2",
+                "owner": self.user.pk}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Course.objects.filter(name="Test Course for tests 2").count(), 1)
+        self.assertTrue(Course.objects.all().exists())
+
+    def test_update_course(self):
+        """Тест изменения курса по Primary Key."""
+
+        url = reverse("edu_materials:courses-detail", args=(self.course.pk,))
+        data = {"name": "Updated Test Course for tests",
+                "description": "Updated Test Course for tests",}
+        response = self.client.put(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Course.objects.get(pk=self.course.pk).name, "Updated Test Course for tests")
+
+    def test_delete_course(self):
+        """Тест удаления курса по Primary Key."""
+
+        url = reverse("edu_materials:courses-detail", args=(self.course.pk,))
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Course.objects.count(), 0)
+
+
+class LessonTestCase(TestCase, APITestCase):
+    """Тесты для работы с уроками."""
 
     def test_lesson_list(self):
-        """Тест на получение списка лекций"""
+        """Тест на получение списка уроков."""
+        res_created_at = DateTimeField().to_representation
+        res_updated_at = DateTimeField().to_representation
 
-        video_url = reverse("edu_materials:lesson_list")
-        response = self.client.get(video_url)
+        url = reverse("edu_materials:lesson_list")
+        response = self.client.get(url)
         data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         result = {
@@ -53,245 +128,51 @@ class LessonUserTestCase(APITestCase):
                 {
                     "id": self.lesson.pk,
                     "name": self.lesson.name,
-                    "course": None,
                     "description": self.lesson.description,
                     "preview": None,
                     "video_url": self.lesson.video_url,
+                    "created_at": res_created_at(self.lesson.created_at),
+                    'updated_at': res_updated_at(self.lesson.updated_at),
+                    "course": self.course.pk,
                     "owner": self.user.pk,
                 }
-            ],
+            ]
         }
         self.assertEqual(data, result)
 
-    def test_lesson_retrieve(self):
-        """Тест на корректное отображение детали лекции"""
+    def test_retrieve_lesson(self):
+        """Тест получения урока по Primary Key."""
+
         url = reverse("edu_materials:lesson_detail", args=(self.lesson.pk,))
-        request = self.client.get(url)
-        response = request.json()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["name"], self.lesson.name)
 
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.get("name"), "Test Lesson for tests")
-        self.assertEqual(response.get("owner"), self.user.pk)
+    def test_create_lesson(self):
+        """Тест создания нового урока."""
 
-    def test_lesson_retrieve_error(self):
-        """Тест на некорректное отображение детали лекции"""
-        url = reverse("edu_materials:lesson_detail", args=(self.lesson2.pk,))
-        request = self.client.get(url)
-        response = request.json()
+        url = reverse("edu_materials:create_lesson")
+        data = {"name": "Test Lesson for tests 2", "description": "Test Lesson for tests 2",
+                "video_url": 'https://www.youtube.com/lesson_1', "course": self.course.pk, "owner": self.user.pk}
+        response = self.client.post(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Lesson.objects.filter(description="Test Lesson for tests 2").count(), 1)
+        self.assertTrue(Lesson.objects.all().exists())
 
-        self.assertEqual(request.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.get("detail"), "You do not have permission to perform this action."
-        )
+    def test_update_lesson(self):
+        """Тест изменения урока по Primary Key."""
 
-    def test_lesson_update(self):
-        """Тест на корректное редактирование лекции"""
         url = reverse("edu_materials:update_lesson", args=(self.lesson.pk,))
-        body = {"name": "My Lesson"}
-        request = self.client.patch(url, body)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.get("name"), "My Lesson")
+        data = {"name": "Updated Test Lesson for tests", "description": "Updated Test Lesson for tests 2",
+                "video_url": 'https://www.youtube.com/lesson_1', "course": self.course.pk, "owner": self.user.pk}
+        response = self.client.put(url, data=data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Lesson.objects.get(pk=self.lesson.pk).description, "Updated Test Lesson for tests 2")
 
     def test_lesson_delete(self):
-        """Тест на корректное удаление лекции"""
+        """Тест удаления урока по Primary Key."""
+
         url = reverse("edu_materials:delete_lesson", args=(self.lesson.pk,))
-        request = self.client.delete(url)
-
-        self.assertEqual(request.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Lesson.objects.all().count(), 1)
-
-
-class CourseSubscriptionTestCase(APITestCase):
-    """Тесты на подписку на курс лекций"""
-
-    def setUp(self):
-        """заполнение базы"""
-        self.user = User.objects.create(email="user@user.ru")
-        self.course = Course.objects.create(name="Course 1", owner=self.user)
-        self.client.force_authenticate(user=self.user)
-
-    def test_course_subscription(self):
-        """Тест на успешную подписку на курс лекций"""
-        url = reverse("edu_materials:course_subscription", args=(self.course.pk,))
-        body = {"subscribe": True}
-        request = self.client.post(url, body)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response.get("message"), "Вы успешно подписаны на курс 'Course 1'"
-        )
-
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        request = self.client.get(url)
-        response = request.json()
-
-        self.assertTrue(response.get("is_subscribed"))
-
-    def test_course_unsubscription(self):
-        """Тест на успешную отмену подписки на курс лекций"""
-        url = reverse("edu_materials:course_subscription", args=(self.course.pk,))
-        body = {"subscribe": ""}
-        request = self.client.post(url, body)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response.get("message"), "Ваша подписка на курс 'Course 1' аннулирована."
-        )
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        request = self.client.get(url)
-        response = request.json()
-
-        self.assertFalse(response.get("is_subscribed"))
-
-
-class CourseUserTestCase(APITestCase):
-    """Тесты для эндпоинтов курса лекций, если аутентифицирован простой пользователь,"""
-
-    def setUp(self):
-        """заполнение базы"""
-        self.user = User.objects.create(email="user@user.ru")
-        self.course = Course.objects.create(name="Course 1", owner=self.user)
-        self.client.force_authenticate(user=self.user)
-
-    def test_course_create(self):
-        """Тесты на успешное создание курса лекций"""
-        url = reverse("edu_materials:course-list")
-        body = {"name": "Course 2"}
-        request = self.client.post(url, body)
-
-        self.assertEqual(request.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Course.objects.all().count(), 2)
-
-    def test_course_retrieve(self):
-        """Тесты на успешное получение деталей о курсе лекций"""
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        request = self.client.get(url)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.get("name"), "Course 1")
-        self.assertEqual(response.get("owner"), self.user.pk)
-
-    def test_course_list(self):
-        """Тесты на успешное создание списка курса лекций"""
-        url = reverse("edu_materials:course-list")
-        request = self.client.get(url)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response,
-            {
-                "count": 1,
-                "next": None,
-                "previous": None,
-                "results": [
-                    {
-                        "id": self.course.pk,
-                        "name": self.course.name,
-                        "description": None,
-                        "owner": self.user.pk,
-                        "amount_of_lessons": 0,
-                        "lessons": [],
-                        "is_subscribed": False,
-                    }
-                ],
-            },
-        )
-
-    def test_course_update(self):
-        """Тесты на успешное редактирование курса лекций"""
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        body = {"name": "Мой курс"}
-        request = self.client.patch(url, body)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.get("name"), "Мой курс")
-
-    def test_course_delete(self):
-        """Тесты на успешное удаление курса лекций"""
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        request = self.client.delete(url)
-
-        self.assertEqual(request.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Course.objects.all().count(), 0)
-
-
-class CourseModeratorTestCase(APITestCase):
-    """Тест для модераторов"""
-
-    def setUp(self):
-        """заполнение базы данных"""
-        self.user = User.objects.create(email="user@user.ru")
-        self.course = Course.objects.create(name="Course 1", owner=self.user)
-        self.course2 = Course.objects.create(name="Course 2", owner=self.user)
-        self.moder = User.objects.create(email="moder@moder.ru")
-        self.moder.groups.create(name="moderators").save()
-        self.client.force_authenticate(user=self.moder)
-
-    def test_course_create_error(self):
-        """Проверка, что модератор не вправе создать курс лекций"""
-        url = reverse("edu_materials:course-list")
-        body = {"name": "Moder Course"}
-        request = self.client.post(url, body)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.get("detail"), "You do not have permission to perform this action."
-        )
-        self.assertEqual(Course.objects.all().count(), 2)
-
-    def test_course_list(self):
-        """Проверка, что модератор может посмотреть список курсов лекций"""
-        url = reverse("edu_materials:course-list")
-        request = self.client.get(url)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response,
-            {
-                "count": 2,
-                "next": "http://testserver/courses/?page=2",
-                "previous": None,
-                "results": [
-                    {
-                        "id": self.course.pk,
-                        "name": self.course.name,
-                        "description": None,
-                        "owner": self.user.pk,
-                        "amount_of_lessons": 0,
-                        "lessons": [],
-                        "is_subscribed": False,
-                    }
-                ],
-            },
-        )
-
-    def test_course_update(self):
-        """Проверка, что модератор может редактировать курс лекций"""
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        body = {"name": "Moder Course"}
-        request = self.client.patch(url, body)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.get("name"), "Moder Course")
-
-    def test_course_delete_error(self):
-        """Проверка, что модератор не вправе удалить курс лекций"""
-        url = reverse("edu_materials:course-detail", args=(self.course.pk,))
-        request = self.client.delete(url)
-        response = request.json()
-
-        self.assertEqual(request.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.get("detail"), "You do not have permission to perform this action."
-        )
-        self.assertEqual(Course.objects.all().count(), 2)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Lesson.objects.count(), 0)

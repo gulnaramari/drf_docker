@@ -136,7 +136,7 @@ class SubscriptionView(APIView):
         course_id = self.request.data.get("course")
         course_item = get_object_or_404(Course, pk=course_id)
 
-        subscription_item = Subscription.objects.all().filter(user=user, course=course_item)
+        subscription_item = Subscription.objects.all().filter(owner=user, course=course_item)
 
         if subscription_item.exists():
             subscription_item.delete()

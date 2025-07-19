@@ -56,7 +56,7 @@ class CourseSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, course):
         """Метод для вывода информации о подписке текущего пользователя на курс."""
         user = self.context["request"].user
-        subscription = Subscription.objects.all().filter(user=user, course=course).exists()
+        subscription = Subscription.objects.all().filter(owner=user, course=course).exists()
         if subscription:
             return "У Вас есть подписка на данный курс."
         return False

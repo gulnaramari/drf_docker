@@ -1,0 +1,91 @@
+version: '3.9'
+
+
+
+services:
+
+
+  drf_docker:
+    build: .
+    command:
+      - /bin/sh
+      - -c
+      - |
+        python manage.py migrate
+        python manage.py createadmin
+        python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  db:
+    image: postgres:15
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis
+    volumes:
+      - .:/app
+      - redis_data:/app/data/redis
+    env_file:
+      - ./.env
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 30s
+      timeout: 10s
+
+  celery:
+    build: .
+    command:
+      - /bin/sh
+      - -c
+      - |
+        celery -A config.celery worker --loglevel=info --pool=solo
+        docker-compose exec celery python manage.py shell -c "from users.tasks import test_add; test_add.delay(2, 3)"
+    volumes:
+      - .:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+      - redis
+      - hw_drf
+
+  celery_beat:
+    build: .
+    command: >
+      bash -c "celery -A HW_skypro_Django_REST_Framework beat --loglevel=info"
+    volumes:
+      - .:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+      - redis
+      - celery
+      - hw_drf
+
+
+
+volumes:
+  db_data:
+  static_volume:
+  media_volume:
+  redis_data:

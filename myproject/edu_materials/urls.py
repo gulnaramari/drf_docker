@@ -14,7 +14,7 @@ from .views import (
 app_name = EduMaterialsConfig.name
 
 router = DefaultRouter()
-router.register(r"courses", CourseViewSet, basename="course")
+router.register(r"courses", CourseViewSet, basename="courses")
 
 urlpatterns = [
     path("lessons/new", LessonCreateAPIView.as_view(), name="create_lesson"),
