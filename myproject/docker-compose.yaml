@@ -4,9 +4,13 @@ version: '3.9'
 services:
 
 
-  web:
+  drf:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+
+    command:
+        python manage.py migrate
+        python manage.py csu
+        python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
       - static_volume:/code/static
@@ -50,7 +54,7 @@ services:
       - -c
       - |
         celery -A config.celery worker --loglevel=info --pool=solo
-        docker-compose exec celery python manage.py shell -c "from users.tasks import test_add; test_add.delay(2, 3)"
+        docker-compose exec celery python manage.py shell -c "from users.tasks import test_add; test_add.delay(2,5)"
     volumes:
       - .:/app
     env_file:
@@ -58,7 +62,7 @@ services:
     depends_on:
       - db
       - redis
-      - web
+      - drf
 
   celery_beat:
     build: .
@@ -72,7 +76,7 @@ services:
       - db
       - redis
       - celery
-      - web
+      - drf
 
 
 volumes:

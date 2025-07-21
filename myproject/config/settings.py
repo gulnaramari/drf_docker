@@ -3,11 +3,9 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
-
 load_dotenv(override=True)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -19,7 +17,6 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = True if os.getenv("DEBUG") == "True" else False
 
 ALLOWED_HOSTS = ["*"]
-
 
 # Application definition
 
@@ -79,7 +76,6 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-
 # Настройки срока действия токенов
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
@@ -98,7 +94,6 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
 }
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -115,7 +110,6 @@ DATABASES = {
         "PORT": os.getenv("PORT", default="5432"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -158,7 +152,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 STRIPE_API_KEY = os.getenv('STRIPE_API_KEY')
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
@@ -177,14 +170,11 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False) == "True"
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", False) == "True"
 
-
-
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 SERVER_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 EMAIL_ADMIN = EMAIL_HOST_USER
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
-
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
 
 CELERY_TIMEZONE = 'Europe/Moscow'
@@ -195,8 +185,7 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_BEAT_SCHEDULE = {
     'blocking_users': {'task': 'users.tasks.blocking_users', 'schedule': timedelta(days=30)},
     'test_add': {'task': 'users.tasks.test_add', 'schedule': timedelta(minutes=5)},
-    'send_course_update': {'task': 'users.tasks.test_add', 'schedule': timedelta(hours=1)},
-}
+    },
 
 
 # Default primary key field type

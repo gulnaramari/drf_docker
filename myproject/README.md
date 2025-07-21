@@ -12,13 +12,15 @@ EduMaterials - это веб-приложение, позволяющее пол
 Документация по API с Swagger
 Авторы: Имя: Михайлова Гульнара Email: gulnaramari@yandex.ru GitHub: https://github.com/gulnaramari/drf.git
 Требования к проекту Python: версия 3.8 или выше Django: версия 3.2 или выше PostgreSQL: версия 12 или выше
-Инструкции по установке и запуску проекта Клонировать репозиторий: git clone git@github.com:gulnaramari/drf.git
+Инструкции по установке и запуску проекта
+Клонировать репозиторий: git clone git@github.com:gulnaramari/drf_docker.git
 Перейти в папку проекта: cd myproject 
-Установить зависимости: pip install -r requirements.txt Создайте файл .env в корневой папке проекта
-и заполните его по шаблону .env.sample переменными:
-SECRET_KEY: секретный ключ проекта (например, случайная строка из 50 символов
-NAME: имя базы данных DBUSER: имя пользователя базы данных
-PASSWORD: пароль пользователя базы данных HOST: адрес хоста базы данных (например, localhost)
-PORT: порт базы данных (например, 5432)
-Создать базу данных: python manage.py migrate
-Запустить сервер: python manage.py runserver
+Установите переменные среды: заполните файл '.env.sample'. 
+Не забудьте переименовать файл в .env! 
+Запустите контейнер: docker-compose up 
+Поздравляю! Проект успешно запущен! Чтобы воспользоваться всеми функциями,
+перейдите по ссылке http://localhost:8000/users/registration 
+и создайте учетную запись пользователя.
+Документация по API
+После запуска контейнера откройте документацию по API по адресу:
+Swagger UI: http://localhost:8000/swagger/ Redoc UI: http://localhost:8000/redoc/
