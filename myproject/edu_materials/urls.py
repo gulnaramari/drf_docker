@@ -9,7 +9,7 @@ from .views import (
     LessonListAPIView,
     LessonRetrieveAPIView,
     LessonUpdateAPIView,
-    )
+)
 
 app_name = EduMaterialsConfig.name
 

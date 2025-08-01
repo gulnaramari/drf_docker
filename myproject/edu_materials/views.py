@@ -12,9 +12,12 @@ from .serializers import CourseSerializer, LessonSerializer, DocNoPermissionSeri
 from users.tasks import send_course_update, test_add
 
 
-@method_decorator(name='list', decorator=swagger_auto_schema(
-    operation_description="description from swagger_auto_schema via method_decorator"
-))
+@method_decorator(
+    name="list",
+    decorator=swagger_auto_schema(
+        operation_description="description from swagger_auto_schema via method_decorator"
+    ),
+)
 class CourseViewSet(viewsets.ModelViewSet):
     """Контроллер-вьюсет для CRUD
     с правами для работы модераторов, немодераторов или владельцев курсов, лекций"""
@@ -25,11 +28,13 @@ class CourseViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """Метод разграничения разрешений на доступ к эндпоитам в соответствии с запросом."""
-        if self.action in ['create']:
+        if self.action in ["create"]:
             self.permission_classes = [IsAuthenticated & ~IsModerator]
-        elif self.action in ['list', 'change', 'retrieve']:
-            self.permission_classes = [IsAuthenticated & IsOwner | IsAuthenticated & IsModerator]
-        elif self.action in ['destroy']:
+        elif self.action in ["list", "change", "retrieve"]:
+            self.permission_classes = [
+                IsAuthenticated & IsOwner | IsAuthenticated & IsModerator
+            ]
+        elif self.action in ["destroy"]:
             self.permission_classes = [IsAuthenticated & IsOwner]
         return [permission() for permission in self.permission_classes]
 
@@ -127,7 +132,6 @@ class LessonUpdateAPIView(generics.UpdateAPIView):
         lesson.updated_at = timezone.now()
         courses.updated_at = timezone.now()
         lesson.save()
-
 
 
 class LessonDestroyAPIView(generics.DestroyAPIView):

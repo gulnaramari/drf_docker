@@ -15,33 +15,140 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Course',
+            name="Course",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='укажите название курса', max_length=100, verbose_name='название курса')),
-                ('preview', models.ImageField(blank=True, help_text='Загрузите превью', null=True, upload_to='edu_materials/previews', verbose_name='превью')),
-                ('description', models.TextField(blank=True, help_text='опишите курс', max_length=250, null=True, verbose_name='описание курса')),
-                ('owner', models.ForeignKey(blank=True, help_text='Укажите владельца курса', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='courses', to=settings.AUTH_USER_MODEL, verbose_name='owner')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="укажите название курса",
+                        max_length=100,
+                        verbose_name="название курса",
+                    ),
+                ),
+                (
+                    "preview",
+                    models.ImageField(
+                        blank=True,
+                        help_text="Загрузите превью",
+                        null=True,
+                        upload_to="edu_materials/previews",
+                        verbose_name="превью",
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True,
+                        help_text="опишите курс",
+                        max_length=250,
+                        null=True,
+                        verbose_name="описание курса",
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Укажите владельца курса",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="courses",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="owner",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Курс',
-                'verbose_name_plural': 'Курсы',
+                "verbose_name": "Курс",
+                "verbose_name_plural": "Курсы",
             },
         ),
         migrations.CreateModel(
-            name='Lesson',
+            name="Lesson",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='укажите название урока', max_length=100, verbose_name='название урока')),
-                ('description', models.TextField(blank=True, help_text='опишите урок', max_length=250, null=True, verbose_name='описание урока')),
-                ('preview', models.ImageField(blank=True, help_text='Загрузите изображение', null=True, upload_to='edu_materials/pictures', verbose_name='картинка')),
-                ('video_url', models.URLField(blank=True, help_text='загрузите видео', null=True, verbose_name='ссылка на видео')),
-                ('course', models.ForeignKey(blank=True, help_text='Select the course', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='lessons', to='edu_materials.course', verbose_name='course')),
-                ('owner', models.ForeignKey(blank=True, help_text='Укажите владельца лекции', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='lessons', to=settings.AUTH_USER_MODEL, verbose_name='owner')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="укажите название урока",
+                        max_length=100,
+                        verbose_name="название урока",
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True,
+                        help_text="опишите урок",
+                        max_length=250,
+                        null=True,
+                        verbose_name="описание урока",
+                    ),
+                ),
+                (
+                    "preview",
+                    models.ImageField(
+                        blank=True,
+                        help_text="Загрузите изображение",
+                        null=True,
+                        upload_to="edu_materials/pictures",
+                        verbose_name="картинка",
+                    ),
+                ),
+                (
+                    "video_url",
+                    models.URLField(
+                        blank=True,
+                        help_text="загрузите видео",
+                        null=True,
+                        verbose_name="ссылка на видео",
+                    ),
+                ),
+                (
+                    "course",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Select the course",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="lessons",
+                        to="edu_materials.course",
+                        verbose_name="course",
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Укажите владельца лекции",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="lessons",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="owner",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Урок',
-                'verbose_name_plural': 'Уроки',
+                "verbose_name": "Урок",
+                "verbose_name_plural": "Уроки",
             },
         ),
     ]

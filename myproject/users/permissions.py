@@ -31,4 +31,3 @@ class IsUserOwner(BasePermission):
         if request.user == obj:
             return True
         return False
-    

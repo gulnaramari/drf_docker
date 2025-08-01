@@ -10,52 +10,178 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('edu_materials', '0001_initial'),
-        ('users', '0001_initial'),
+        ("edu_materials", "0001_initial"),
+        ("users", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='user',
-            name='is_active',
-            field=models.BooleanField(default=True, help_text='Select whether user can use the service', verbose_name='active'),
+            model_name="user",
+            name="is_active",
+            field=models.BooleanField(
+                default=True,
+                help_text="Select whether user can use the service",
+                verbose_name="active",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='is_staff',
-            field=models.BooleanField(default=False, help_text='Select whether user can act as admin', verbose_name='staff'),
+            model_name="user",
+            name="is_staff",
+            field=models.BooleanField(
+                default=False,
+                help_text="Select whether user can act as admin",
+                verbose_name="staff",
+            ),
         ),
         migrations.CreateModel(
-            name='Payment',
+            name="Payment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('payment_date', models.DateTimeField(default=datetime.datetime.now, help_text='Введите дату платежа', verbose_name='Дата оплаты')),
-                ('amount', models.DecimalField(decimal_places=2, help_text='Введите сумму платежа', max_digits=20, validators=[django.core.validators.MinValueValidator(0)], verbose_name='Сумма платежа')),
-                ('payment_type', models.CharField(choices=[('BANK_TRANSFER', 'Банковский перевод'), ('CASH', 'Наличными')], default='BANK_TRANSFER', help_text='Выберите способ оплаты', max_length=50, verbose_name='Способ оплаты')),
-                ('session_id', models.CharField(blank=True, max_length=255, null=True, verbose_name='ID сессии')),
-                ('payment_link', models.URLField(blank=True, max_length=400, null=True, verbose_name='Ссылка на оплату')),
-                ('paid_course', models.ForeignKey(blank=True, help_text='Выберите курс', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='payments', to='edu_materials.course', verbose_name='Оплаченный курс')),
-                ('paid_lesson', models.ForeignKey(blank=True, help_text='Выберите лекцию', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='payments', to='edu_materials.lesson', verbose_name='Оплаченный урок')),
-                ('user', models.ForeignKey(blank=True, help_text='выберите пользователя', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='payments', to=settings.AUTH_USER_MODEL, verbose_name='пользователь')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "payment_date",
+                    models.DateTimeField(
+                        default=datetime.datetime.now,
+                        help_text="Введите дату платежа",
+                        verbose_name="Дата оплаты",
+                    ),
+                ),
+                (
+                    "amount",
+                    models.DecimalField(
+                        decimal_places=2,
+                        help_text="Введите сумму платежа",
+                        max_digits=20,
+                        validators=[django.core.validators.MinValueValidator(0)],
+                        verbose_name="Сумма платежа",
+                    ),
+                ),
+                (
+                    "payment_type",
+                    models.CharField(
+                        choices=[
+                            ("BANK_TRANSFER", "Банковский перевод"),
+                            ("CASH", "Наличными"),
+                        ],
+                        default="BANK_TRANSFER",
+                        help_text="Выберите способ оплаты",
+                        max_length=50,
+                        verbose_name="Способ оплаты",
+                    ),
+                ),
+                (
+                    "session_id",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="ID сессии"
+                    ),
+                ),
+                (
+                    "payment_link",
+                    models.URLField(
+                        blank=True,
+                        max_length=400,
+                        null=True,
+                        verbose_name="Ссылка на оплату",
+                    ),
+                ),
+                (
+                    "paid_course",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Выберите курс",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="payments",
+                        to="edu_materials.course",
+                        verbose_name="Оплаченный курс",
+                    ),
+                ),
+                (
+                    "paid_lesson",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Выберите лекцию",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="payments",
+                        to="edu_materials.lesson",
+                        verbose_name="Оплаченный урок",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="выберите пользователя",
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="payments",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="пользователь",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Платеж',
-                'verbose_name_plural': 'Платежи',
-                'ordering': ['payment_date', 'user', 'amount', 'paid_course', 'paid_lesson', 'payment_type'],
+                "verbose_name": "Платеж",
+                "verbose_name_plural": "Платежи",
+                "ordering": [
+                    "payment_date",
+                    "user",
+                    "amount",
+                    "paid_course",
+                    "paid_lesson",
+                    "payment_type",
+                ],
             },
         ),
         migrations.CreateModel(
-            name='Subscription',
+            name="Subscription",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата начала подписки')),
-                ('course', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='edu_materials.course', verbose_name='Подписка на курс')),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Пользователь')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Дата начала подписки"
+                    ),
+                ),
+                (
+                    "course",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="edu_materials.course",
+                        verbose_name="Подписка на курс",
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Пользователь",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Подписка',
-                'verbose_name_plural': 'Подписки',
-                'ordering': ['created_at', 'owner', 'course'],
+                "verbose_name": "Подписка",
+                "verbose_name_plural": "Подписки",
+                "ordering": ["created_at", "owner", "course"],
             },
         ),
     ]

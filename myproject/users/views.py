@@ -9,8 +9,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Payment, User, Subscription
 from .permissions import IsUser, IsOwner, IsUserOwner
-from .serializers import PaymentSerializer, UserBaseSerializer, UserSerializer, SubscriptionSerializer, \
-    CustomUserSerializer
+from .serializers import (
+    PaymentSerializer,
+    UserBaseSerializer,
+    UserSerializer,
+    SubscriptionSerializer,
+    CustomUserSerializer,
+)
 from .services import create_product, create_price, create_session
 from edu_materials.models import Course
 
@@ -69,7 +74,7 @@ class PaymentsListAPIView(generics.ListAPIView):
     serializer_class = PaymentSerializer
     queryset = Payment.objects.all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ('paid_course', 'paid_lesson', 'payment_type')
+    filterset_fields = ("paid_course", "paid_lesson", "payment_type")
     ordering_fields = ("payment_date",)
     permission_classes = [IsAuthenticated]
 
@@ -100,7 +105,7 @@ class PaymentCreateAPIView(generics.CreateAPIView):
 
 
 class PaymentUpdateAPIView(generics.UpdateAPIView):
-    """Контроллер для изменения оплаты """
+    """Контроллер для изменения оплаты"""
 
     serializer_class = PaymentSerializer
     queryset = Payment.objects.all()
@@ -108,7 +113,7 @@ class PaymentUpdateAPIView(generics.UpdateAPIView):
 
 
 class PaymentDestroyAPIView(generics.DestroyAPIView):
-    """Контроллер для удаления оплаты """
+    """Контроллер для удаления оплаты"""
 
     queryset = Payment.objects.all()
     permission_classes = [IsAuthenticated & IsOwner]
@@ -136,7 +141,9 @@ class SubscriptionView(APIView):
         course_id = self.request.data.get("course")
         course_item = get_object_or_404(Course, pk=course_id)
 
-        subscription_item = Subscription.objects.all().filter(owner=user, course=course_item)
+        subscription_item = Subscription.objects.all().filter(
+            owner=user, course=course_item
+        )
 
         if subscription_item.exists():
             subscription_item.delete()

@@ -1,4 +1,3 @@
-import eventlet
 import smtplib
 from datetime import timedelta
 from celery import shared_task
@@ -20,11 +19,11 @@ def send_course_update(course_id):
 
     try:
         send_mail(
-            subject='В курсе произошли изменения',
+            subject="В курсе произошли изменения",
             message=f'В курсе "{course.name}" произошли изменения',
             from_email=EMAIL_HOST_USER,
             recipient_list=recipient_list,
-            fail_silently=True
+            fail_silently=True,
         )
     except smtplib.SMTPException:
         raise smtplib.SMTPException
@@ -36,7 +35,7 @@ def blocking_users():
 
     users = User.objects.filter(is_active=True)
     today = timezone.now()
-    was_blocked = [] # будем собирать сюда email заблокированных
+    was_blocked = []  # будем собирать сюда email заблокированных
     for user in users:
         if user.last_login:
             if today - user.last_login > timedelta(days=30):
@@ -46,17 +45,19 @@ def blocking_users():
         return was_blocked
 
     if was_blocked:
-        recipient_list = [user.email for user in User.objects.filter(groups__name="Администратор")]
+        recipient_list = [
+            user.email for user in User.objects.filter(groups__name="Администратор")
+        ]
         try:
             send_mail(
-                subject='Блокировка неактивных пользователей',
+                subject="Блокировка неактивных пользователей",
                 message=f"Пользователи: {', '.join(was_blocked)} заблокированы.",
                 from_email=EMAIL_HOST_USER,
                 recipient_list=recipient_list,
-                fail_silently=True
+                fail_silently=True,
             )
         except BadHeaderError:
-            return HttpResponse('Обнаружена ошибка')
+            return HttpResponse("Обнаружена ошибка")
         except smtplib.SMTPException:
             raise smtplib.SMTPException
         print(f"Пользователи:{', '.join(was_blocked)} заблокированы.")

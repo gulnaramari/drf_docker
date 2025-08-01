@@ -34,10 +34,12 @@ class Course(models.Model):
         null=True,
         blank=True,
     )
-    created_at = models.DateTimeField(auto_now_add=True,  null=True,
-        blank=True,verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True,  null=True,
-        blank=True, verbose_name="Дата изменения")
+    created_at = models.DateTimeField(
+        auto_now_add=True, null=True, blank=True, verbose_name="Дата создания"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, null=True, blank=True, verbose_name="Дата изменения"
+    )
 
     class Meta:
         verbose_name = "Курс"
@@ -94,10 +96,12 @@ class Lesson(models.Model):
         null=True,
         blank=True,
     )
-    created_at = models.DateTimeField(auto_now_add=True, null=True,
-                                      blank=True, verbose_name="Дата создания")
-    updated_at = models.DateTimeField(auto_now=True, null=True,
-                                      blank=True, verbose_name="Дата изменения")
+    created_at = models.DateTimeField(
+        auto_now_add=True, null=True, blank=True, verbose_name="Дата создания"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, null=True, blank=True, verbose_name="Дата изменения"
+    )
 
     class Meta:
         verbose_name = "Урок"
