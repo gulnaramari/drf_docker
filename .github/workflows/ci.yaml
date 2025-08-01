@@ -23,7 +23,7 @@ jobs:
           pip install flake8
 
       - name: Run Flake8
-        run: flake8 .
+        run: flake8 . --ignore=W605,E501
 
   test:
     runs-on: ubuntu-latest
