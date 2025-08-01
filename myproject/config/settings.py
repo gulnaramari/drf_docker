@@ -105,7 +105,8 @@ SPECTACULAR_SETTINGS = {
 if 'test' in sys.argv:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.sqlite3"
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": 'test.sqlite3'
         }
     }
 else:
