@@ -46,7 +46,7 @@ jobs:
       env:
         SECRET_KEY: ${{secrets.SECRET_KEY}}
         DEBUG: True
-      run: python manage.py migrate
+      run: python myproject/manage.py migrate
 
     - name: Run tests
-      run: python manage.py test
+      run: python myproject/manage.py test
