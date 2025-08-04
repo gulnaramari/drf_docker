@@ -12,7 +12,7 @@ COPY requirements.txt ./myproject
 # Устанавливаем зависимости Python
 
 RUN pip install --upgrade pip setuptools
-RUN pip install -r myproject\requirements.txt
+RUN pip install -r myproject/requirements.txt
 
 # Копируем исходный код приложения в контейнер
 COPY . .
