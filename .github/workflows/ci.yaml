@@ -67,6 +67,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
       - name: Check out code
@@ -76,13 +77,14 @@ jobs:
         run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }} .
 
       - name: Push Docker image to Docker Hub
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+
   deploy:
       runs-on: ubuntu-latest
-      needs: test
+      needs: build
 
       steps:
       - name: Set up SSH
