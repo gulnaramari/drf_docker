@@ -5,14 +5,14 @@ FROM python:3.9
 WORKDIR /app
 
 # Устанавливаем зависимости системы
-COPY requirements.txt ./myproject
+COPY drf_docker/myproject/requirements.txt
 
 
 
 # Устанавливаем зависимости Python
 
 RUN pip install --upgrade pip setuptools
-RUN pip install -r ./myproject/requirements.txt
+RUN pip install -r drf_docker/myproject/requirements.txt
 
 # Копируем исходный код приложения в контейнер
 COPY . .
