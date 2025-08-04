@@ -92,11 +92,23 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
-      - name: Deploy to Server
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 755 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_host
+
+      - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
-            docker stop drf_docker || true
-            docker rm drf_docker || true
-            docker run -d --name drf_docker -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+          cd ${{ secrets.DEPLOY_DIR }}
+          sudo git init
+          sudo git pull https://github.com/gulnaramari/drf_docker.git
+          sudo echo "${{ secrets.ENV_FILE }}" >> .env
+          ls -la
+          docker compose down || true
+          docker stop $(docker ps -q) 2>/dev/null || echo "Нет запущенных контейнеров" || true
+          docker rm $(docker ps -qa) 2>/dev/null || echo "Нет контейнеров для удаления" || true
+          docker compose -f docker-compose.yaml up -d --build
           EOF
