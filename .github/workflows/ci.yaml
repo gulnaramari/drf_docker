@@ -105,7 +105,7 @@ jobs:
           cd ${{ secrets.DEPLOY_DIR }}
           sudo git init
           sudo git pull https://github.com/gulnaramari/drf_docker
-          sudo echo "${{ secrets.ENV_FILE }}" >> .env
+        
           ls -la
           docker compose down || true
           docker stop $(docker ps -q) 2>/dev/null || echo "Нет запущенных контейнеров" || true
