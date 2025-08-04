@@ -102,7 +102,7 @@ jobs:
             cd ${{ secrets.DEPLOY_DIR }}
             python3 -m venv venv
             source venv/bin/activate
-            pip install -r requirements.txt
+            pip install -r myproject/requirements.txt
           EOF
 
       - name: Apply migrations on server

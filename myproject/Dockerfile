@@ -5,13 +5,13 @@ FROM python:3.9
 WORKDIR /app
 
 # Устанавливаем зависимости системы
-COPY requirements.txt ./
+COPY myproject/requirements.txt ./
 
 
 # Устанавливаем зависимости Python
 
 RUN pip install --upgrade pip setuptools
-RUN pip install -r requirements.txt
+RUN pip install -r myproject/requirements.txt
 
 # Копируем исходный код приложения в контейнер
 COPY . .
