@@ -102,13 +102,8 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-          cd ${{ secrets.DEPLOY_DIR }}
-          sudo git init
-          sudo git pull https://github.com/gulnaramari/drf_docker.git
-          sudo echo "${{ secrets.ENV_FILE }}" >> .env
-          ls -la
-          docker compose down || true
-          docker stop $(docker ps -q) 2>/dev/null || echo "Нет запущенных контейнеров" || true
-          docker rm $(docker ps -qa) 2>/dev/null || echo "Нет контейнеров для удаления" || true
-          docker compose -f myproject/docker-compose.yaml up -d --build
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+            docker stop drf_docker || true
+            docker rm drf_docker || true
+            docker run -d --name drf_docker -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
           EOF
