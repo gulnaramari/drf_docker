@@ -9,6 +9,8 @@ COPY requirements.txt ./
 
 
 # Устанавливаем зависимости Python
+
+RUN pip install --upgrade pip setuptools
 RUN pip install -r requirements.txt
 
 # Копируем исходный код приложения в контейнер
