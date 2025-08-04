@@ -15,4 +15,6 @@ PyJWT==2.9.0
 python-dotenv==1.1.1
 requests==2.32.4
 stripe==12.3.0
+gunicorn
+django-redis
 
