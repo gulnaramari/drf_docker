@@ -110,5 +110,5 @@ jobs:
           docker compose down || true
           docker stop $(docker ps -q) 2>/dev/null || echo "Нет запущенных контейнеров" || true
           docker rm $(docker ps -qa) 2>/dev/null || echo "Нет контейнеров для удаления" || true
-          docker compose -f docker-compose.yaml up -d --build
+          docker compose -f myproject/docker-compose.yaml up -d --build
           EOF
