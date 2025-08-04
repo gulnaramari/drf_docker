@@ -5,7 +5,7 @@ FROM python:3.9
 WORKDIR /app
 
 # Устанавливаем зависимости системы
-COPY myproject/requirements.txt
+COPY myproject/requirements.txt ./
 
 
 
