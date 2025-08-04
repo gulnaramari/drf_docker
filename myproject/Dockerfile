@@ -41,4 +41,4 @@ EXPOSE 5432
 EXPOSE 6379
 
 # Команда для запуска приложения
-CMD ["sh", "-c", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
