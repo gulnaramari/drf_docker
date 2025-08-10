@@ -77,7 +77,7 @@ class LessonCreateAPIView(generics.CreateAPIView):
     """Создание контроллера для создания лекции немодератором."""
 
     serializer_class = LessonSerializer
-    permission_classes = (~IsModerator,)
+    permission_classes = [IsAuthenticated & ~IsModerator]
     queryset = Lesson.objects.all().order_by("id")
 
     def perform_create(self, serializer):
@@ -95,12 +95,9 @@ class LessonListAPIView(generics.ListAPIView):
     pagination_class = LMSPagination
 
     def get_queryset(self):
-        """Метод, позволяет получить список лекции владельца или модератора"""
         if not IsModerator().has_permission(self.request, self):
-            return Lesson.objects.filter(owner=self.request.user)
-        return Lesson.objects.all()
-
-
+            return Lesson.objects.filter(owner=self.request.user).order_by("id")
+        return Lesson.objects.all().order_by("id")
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     """Класс, позволяет модератору или владельцу получить детали лекции"""
 
@@ -120,17 +117,15 @@ class LessonUpdateAPIView(generics.UpdateAPIView):
         """Метод вносит изменение в сериализатор редактирования "Урока"."""
 
         lesson = serializer.save()
-        courses = Course.objects.filter(pk=lesson.course.pk)
-        for course in courses:
+        if lesson.course_id:
             if lesson.updated_at:
                 time_difference = timezone.now() - lesson.updated_at
                 if time_difference > timedelta(hours=3):
-                    send_course_update.delay(course.pk)
+                    send_course_update.delay(lesson.course_id)
             else:
-                send_course_update.delay(course.pk)
-
+                send_course_update.delay(lesson.course_id)
+            Course.objects.filter(pk=lesson.course_id).update(updated_at=timezone.now())
         lesson.updated_at = timezone.now()
-        courses.updated_at = timezone.now()
         lesson.save()
 
 

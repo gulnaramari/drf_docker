@@ -30,11 +30,7 @@ class TestCase(APITestCase):
 
 
 class CourseTestCase(TestCase, APITestCase):
-    """Тесты для работы с курсами."""
-
     def test_course_list(self):
-        """Тест на получение списка курсов."""
-
         res_created_at = DateTimeField().to_representation
         res_updated_at = DateTimeField().to_representation
         url = reverse("edu_materials:courses-list")
@@ -73,6 +69,8 @@ class CourseTestCase(TestCase, APITestCase):
                 }
             ],
         }
+        if response.status_code != status.HTTP_200_OK:
+            print("COURSE LIST ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(data, result)
 
@@ -81,9 +79,14 @@ class CourseTestCase(TestCase, APITestCase):
         url = reverse("edu_materials:courses-detail", args=[self.course.pk])
         response = self.client.get(url)
         data = response.json()
+        if response.status_code != status.HTTP_200_OK:
+            print("COURSE RETRIEVE ERRORS:", response.status_code, response.json())
+        data = response.json()
         self.assertEqual(Course.objects.all().count(), 1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(data.get("name"), self.course.name)
+
+
 
     def test_create_course(self):
         """Тест создания нового курса."""
@@ -95,6 +98,8 @@ class CourseTestCase(TestCase, APITestCase):
             "owner": self.user.pk,
         }
         response = self.client.post(url, data=data)
+        if response.status_code != status.HTTP_201_CREATED:
+            print("COURSE CREATE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
             Course.objects.filter(name="Test Course for tests 2").count(), 1
@@ -110,6 +115,8 @@ class CourseTestCase(TestCase, APITestCase):
             "description": "Updated Test Course for tests",
         }
         response = self.client.put(url, data=data)
+        if response.status_code != status.HTTP_200_OK:
+            print("COURSE UPDATE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             Course.objects.get(pk=self.course.pk).name, "Updated Test Course for tests"
@@ -120,6 +127,8 @@ class CourseTestCase(TestCase, APITestCase):
 
         url = reverse("edu_materials:courses-detail", args=(self.course.pk,))
         response = self.client.delete(url)
+        if response.status_code != status.HTTP_204_NO_CONTENT:
+            print("COURSE DELETE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Course.objects.count(), 0)
 
@@ -134,6 +143,8 @@ class LessonTestCase(TestCase, APITestCase):
 
         url = reverse("edu_materials:lesson_list")
         response = self.client.get(url)
+        if response.status_code != status.HTTP_200_OK:
+            print("LESSON LIST ERRORS:", response.status_code, response.json())
         data = response.json()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         result = {
@@ -161,12 +172,16 @@ class LessonTestCase(TestCase, APITestCase):
 
         url = reverse("edu_materials:lesson_detail", args=(self.lesson.pk,))
         response = self.client.get(url)
+        if response.status_code != status.HTTP_200_OK:
+            print("LESSON RETRIEVE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["name"], self.lesson.name)
 
-    def test_create_lesson(self):
-        """Тест создания нового урока."""
+        print(response.status_code)
+        print(response.json())
 
+
+    def test_create_lesson(self):
         url = reverse("edu_materials:create_lesson")
         data = {
             "name": "Test Lesson for tests 2",
@@ -176,6 +191,8 @@ class LessonTestCase(TestCase, APITestCase):
             "owner": self.user.pk,
         }
         response = self.client.post(url, data=data)
+        if response.status_code != status.HTTP_201_CREATED:
+            print("LESSON CREATE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(
             Lesson.objects.filter(description="Test Lesson for tests 2").count(), 1
@@ -183,8 +200,6 @@ class LessonTestCase(TestCase, APITestCase):
         self.assertTrue(Lesson.objects.all().exists())
 
     def test_update_lesson(self):
-        """Тест изменения урока по Primary Key."""
-
         url = reverse("edu_materials:update_lesson", args=(self.lesson.pk,))
         data = {
             "name": "Updated Test Lesson for tests",
@@ -194,6 +209,8 @@ class LessonTestCase(TestCase, APITestCase):
             "owner": self.user.pk,
         }
         response = self.client.put(url, data=data)
+        if response.status_code != status.HTTP_200_OK:
+            print("LESSON UPDATE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             Lesson.objects.get(pk=self.lesson.pk).description,
@@ -201,9 +218,10 @@ class LessonTestCase(TestCase, APITestCase):
         )
 
     def test_lesson_delete(self):
-        """Тест удаления урока по Primary Key."""
-
         url = reverse("edu_materials:delete_lesson", args=(self.lesson.pk,))
         response = self.client.delete(url)
+        if response.status_code != status.HTTP_204_NO_CONTENT:
+            print("LESSON DELETE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Lesson.objects.count(), 0)
+
