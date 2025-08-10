@@ -102,12 +102,9 @@ SPECTACULAR_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if 'test' in sys.argv or 'migrate' in sys.argv:
+if "test" in sys.argv or "migrate" in sys.argv:
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": 'test.sqlite3'
-        }
+        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "test.sqlite3"}
     }
 else:
     DATABASES = {
@@ -215,8 +212,8 @@ CELERY_BEAT_SCHEDULE = (
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
     }
 }

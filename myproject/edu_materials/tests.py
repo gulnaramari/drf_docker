@@ -86,8 +86,6 @@ class CourseTestCase(TestCase, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(data.get("name"), self.course.name)
 
-
-
     def test_create_course(self):
         """Тест создания нового курса."""
 
@@ -180,7 +178,6 @@ class LessonTestCase(TestCase, APITestCase):
         print(response.status_code)
         print(response.json())
 
-
     def test_create_lesson(self):
         url = reverse("edu_materials:create_lesson")
         data = {
@@ -224,4 +221,3 @@ class LessonTestCase(TestCase, APITestCase):
             print("LESSON DELETE ERRORS:", response.status_code, response.json())
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Lesson.objects.count(), 0)
-

@@ -23,8 +23,14 @@ from users.models import Subscription, User
 )
 class LessonSerializer(serializers.ModelSerializer):
     """Создание сериализатора для модели лекции"""
-    owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
-    course = serializers.PrimaryKeyRelatedField(queryset=Course.objects.all(), required=False, allow_null=True)
+
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
+    course = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), required=False, allow_null=True
+    )
+
     class Meta:
         model = Lesson
         fields = "__all__"
@@ -40,7 +46,9 @@ class CourseSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
     count_subscriptions = serializers.SerializerMethodField()
 
-    owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
 
     class Meta:
         """Класс для изменения поведения полей сериализатора модели "Курс"."""
@@ -59,7 +67,6 @@ class CourseSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, course):
         user = self.context["request"].user
         return Subscription.objects.filter(owner=user, course=course).exists()
-
 
 
 class DocNoPermissionSerializer(serializers.Serializer):

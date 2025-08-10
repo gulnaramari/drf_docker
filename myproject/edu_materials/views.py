@@ -98,6 +98,8 @@ class LessonListAPIView(generics.ListAPIView):
         if not IsModerator().has_permission(self.request, self):
             return Lesson.objects.filter(owner=self.request.user).order_by("id")
         return Lesson.objects.all().order_by("id")
+
+
 class LessonRetrieveAPIView(generics.RetrieveAPIView):
     """Класс, позволяет модератору или владельцу получить детали лекции"""
 
