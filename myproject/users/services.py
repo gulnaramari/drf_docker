@@ -14,10 +14,7 @@ def create_product(payment):
         if payment.paid_course.name != product.name and payment.paid_lesson is None:
             paid_product = payment.paid_course.name
             stripe_product = stripe.Product.create(name=f"{paid_product}")
-        elif (
-            payment.paid_lesson.name != product.name
-            and payment.paid_lesson.name is not None
-        ):
+        elif (payment.paid_lesson.name != product.name and payment.paid_lesson.name is not None):
             paid_product = payment.paid_lesson.name
             stripe_product = stripe.Product.create(name=f"{paid_product}")
         else:
