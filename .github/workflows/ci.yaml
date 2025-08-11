@@ -117,3 +117,4 @@ jobs:
             sudo docker rm drf_docker || true
             sudo docker run -d --name drf_docker -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
           EOF
+

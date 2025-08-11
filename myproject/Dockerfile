@@ -32,6 +32,7 @@ ENV DATABASE_URL=os.getenv('DATABASE_URL')
 ENV DEBUG=True
 
 
+
 # Создаем директорию для медиафайлов
 RUN mkdir -p /app/static
 RUN mkdir -p /app/media
