@@ -48,6 +48,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-    
 
+
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
@@ -72,7 +73,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: test
-
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -85,6 +85,8 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+
+
 
   deploy:
     needs: build
@@ -109,8 +111,6 @@ jobs:
           envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 
-
-
       - name: Deploy to Server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
@@ -119,3 +119,4 @@ jobs:
             sudo docker rm drf_docker || true
             sudo docker run -d --name drf_docker -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
           EOF
+

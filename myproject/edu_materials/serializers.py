@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from .models import Course, Lesson
 from .validators import URLValidator
-from users.models import Subscription
+from users.models import Subscription, User
 
 
 @extend_schema_serializer(
@@ -24,6 +24,13 @@ from users.models import Subscription
 class LessonSerializer(serializers.ModelSerializer):
     """Создание сериализатора для модели лекции"""
 
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
+    course = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), required=False, allow_null=True
+    )
+
     class Meta:
         model = Lesson
         fields = "__all__"
@@ -34,10 +41,14 @@ class CourseSerializer(serializers.ModelSerializer):
     """Создание кастомного сериализатора для модели курса
     с дополнительными полями и вложенным сериализатором по лекции"""
 
-    amount_of_lessons = serializers.SerializerMethodField(read_only=True)
-    lessons = LessonSerializer(read_only=True, many=True)
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
-    count_subscriptions = serializers.SerializerMethodField(read_only=True)
+    lesson = LessonSerializer(source="lessons", many=True, read_only=True)
+    amount_of_lessons = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+    count_subscriptions = serializers.SerializerMethodField()
+
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
 
     class Meta:
         """Класс для изменения поведения полей сериализатора модели "Курс"."""
@@ -54,14 +65,8 @@ class CourseSerializer(serializers.ModelSerializer):
         return f"Подписок - {Subscription.objects.filter(course=instance).count()}."
 
     def get_is_subscribed(self, course):
-        """Метод для вывода информации о подписке текущего пользователя на курс."""
         user = self.context["request"].user
-        subscription = (
-            Subscription.objects.all().filter(owner=user, course=course).exists()
-        )
-        if subscription:
-            return "У Вас есть подписка на данный курс."
-        return False
+        return Subscription.objects.filter(owner=user, course=course).exists()
 
 
 class DocNoPermissionSerializer(serializers.Serializer):
