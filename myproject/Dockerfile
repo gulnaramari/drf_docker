@@ -38,7 +38,6 @@ RUN mkdir -p /app/static
 RUN mkdir -p /app/media
 
 
-
 # Пробрасываем порт, который будет использовать Django
 EXPOSE 8000
 EXPOSE 5432
