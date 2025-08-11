@@ -48,6 +48,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-    
 
+
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
@@ -69,12 +70,14 @@ jobs:
 
       run: python myproject/manage.py test
 
+
   build:
     runs-on: ubuntu-latest
     needs: test
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+
 
       - name: Log in to Docker Hub
         run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
@@ -84,6 +87,7 @@ jobs:
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+
 
 
   deploy:
