@@ -23,7 +23,7 @@ ENV CELERY_BROKER_URL=os.getenv('CELERY_BROKER_URL')
 ENV CELERY_BACKEND='django.core.cache.backends.redis.RedisCache'
 
 # Определяем переменные окружения
-ENV SECRET_KEY=os.getenv("SECRET_KEY")
+ENV SECRET_KEY=your_secret_key
 ENV POSTGRES_DB=os.getenv('POSTGRES_DB')
 ENV POSTGRES_USER=os.getenv('POSTGRES_USER')
 ENV POSTGRES_PASSWORD=os.getenv('POSTGRES_PASSWORD')
