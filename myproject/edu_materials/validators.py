@@ -1,5 +1,7 @@
-import re
-from rest_framework.serializers import ValidationError
+from rest_framework import serializers
+from urllib.parse import urlparse
+from django.conf import settings
+from myproject.edu_materials import serializers
 
 
 class URLValidator:
@@ -12,14 +14,11 @@ class URLValidator:
     def __fields__(self):
         return [self.field]
 
-    def __call__(self, value):
-        """Метод для получения и проверки указанных данных поля ссылки на видео у объекта модели "Урок"."""
-
-        reg = re.compile("^(https?:)?([\w-]{1,32}\.[\w-]{1,32})[^\s@]*$")
-        tmp_val = dict(value).get(self.field)
-        if not value or value is None or not bool(reg.match(tmp_val)):
-            raise ValidationError("Ссылка не корректна. Не корректный формат ссылки.")
-        elif "youtube.com" not in tmp_val:
-            raise ValidationError(
-                "Ссылка на видео разрешена только с сайта youtube.com."
-            )
+    def validate_video_url(self, value):
+        if not value:
+            return value
+        host = (urlparse(value).hostname or "").lower()
+        allowed = getattr(settings, "ALLOWED_LESSON_DOMAINS", ("youtube.com",))
+        if not any(host == d or host.endswith("." + d) for d in allowed):
+            raise serializers.ValidationError("Допустимы ссылки только на youtube.com")
+        return value

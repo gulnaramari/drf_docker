@@ -1,9 +1,7 @@
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
-
 from .models import Course, Lesson
 from .validators import URLValidator
-from users.models import Subscription
 
 
 @extend_schema_serializer(
@@ -53,6 +51,7 @@ class CourseSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj): return False
 
     def get_count_subscriptions(self, obj): return "Подписок - 0."
+
 
 class DocNoPermissionSerializer(serializers.Serializer):
     detail = serializers.CharField(default="У вас нет права на это действие")
