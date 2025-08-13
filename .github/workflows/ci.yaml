@@ -102,6 +102,8 @@ jobs:
         with:
           envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
           envkey_DEBUG: "False"
+          envkey_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          envkey_IMAGE_TAG: ${{ github.sha }}
 
           # Postgres (секреты так и назови в репозитории: POSTGRES_DB/USER/PASSWORD)
           envkey_POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -129,12 +131,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             set -euo pipefail
             cd ~
-          
-            # переменные для image substitution в compose
-            export DOCKER_HUB_USERNAME='${{ secrets.DOCKER_HUB_USERNAME }}'
-            export IMAGE_TAG='${{ github.sha }}'
-          
-            # логинимся на случай приватного образа
+                               
             echo '${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}' | sudo docker login -u '${{ secrets.DOCKER_HUB_USERNAME }}' --password-stdin || true
           
             # тянем образы и поднимаем стэк
