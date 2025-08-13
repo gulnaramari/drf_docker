@@ -121,6 +121,12 @@ else:
         }
     }
 
+print(os.getenv("NAME"))
+print(os.getenv("USER"))
+print(os.getenv("PASSWORD"))
+print(os.getenv("HOST"))
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
