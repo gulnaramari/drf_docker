@@ -1,7 +1,8 @@
+from urllib.parse import urlparse
+from django.conf import settings
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 from .models import Course, Lesson
-from .validators import URLValidator
 
 
 @extend_schema_serializer(
@@ -20,12 +21,23 @@ from .validators import URLValidator
     ]
 )
 class LessonSerializer(serializers.ModelSerializer):
-    """Создание сериализатора для модели лекции"""
-
     class Meta:
         model = Lesson
-        fields = "__all__"
-        validators = [URLValidator(field="video_url")]
+        fields = [
+            "id", "name", "description", "preview", "video_url",
+            "course", "owner", "created_at", "updated_at",
+        ]
+
+    def validate_video_url(self, value):
+        # допускаем пустое значение
+        if not value:
+            return value
+        host = (urlparse(value).hostname or "").lower()
+        allowed = getattr(settings, "ALLOWED_LESSON_DOMAINS", ("youtube.com",))
+        # разрешаем поддомены, например www.youtube.com
+        if not any(host == d or host.endswith("." + d) for d in allowed):
+            raise serializers.ValidationError("Допустимы ссылки только на youtube.com")
+        return value
 
 
 class CourseSerializer(serializers.ModelSerializer):

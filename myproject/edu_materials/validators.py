@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 from django.conf import settings
 
 
-
 class URLValidator:
     """Класс для валидации ссылок на курс."""
 
