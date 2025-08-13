@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from urllib.parse import urlparse
 from django.conf import settings
-from myproject.edu_materials import serializers
+
 
 
 class URLValidator:
