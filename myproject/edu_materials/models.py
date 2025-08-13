@@ -1,6 +1,6 @@
 from django.db import models
 
-from config.settings import AUTH_USER_MODEL
+from django.conf import settings
 
 
 class Course(models.Model):
@@ -26,7 +26,7 @@ class Course(models.Model):
         null=True,
     )
     owner = models.ForeignKey(
-        AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="courses",
         verbose_name="owner",
@@ -88,7 +88,7 @@ class Lesson(models.Model):
         help_text="загрузите видео",
     )
     owner = models.ForeignKey(
-        AUTH_USER_MODEL,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         related_name="lessons",
         verbose_name="owner",
