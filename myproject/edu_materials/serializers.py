@@ -40,29 +40,19 @@ class CourseSerializer(serializers.ModelSerializer):
     count_subscriptions = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        """Класс для изменения поведения полей сериализатора модели "Курс"."""
-
         model = Course
-        fields = "__all__"
+        fields = [
+            "id", "amount_of_lessons", "lesson",
+            "is_subscribed", "count_subscriptions",
+            "name", "preview", "description", "owner",
+            "created_at", "updated_at",
+        ]
 
-    def get_amount_of_lessons(self, course):
-        """Метод для вывода информации о количестве уроков в курсе."""
-        return Lesson.objects.filter(course=course).count()
+    def get_amount_of_lessons(self, obj): return obj.lessons.count()
 
-    def get_count_subscriptions(self, instance):
-        """Метод для вывода информации о количестве подписок на курс."""
-        return f"Подписок - {Subscription.objects.filter(course=instance).count()}."
+    def get_is_subscribed(self, obj): return False
 
-    def get_is_subscribed(self, course):
-        """Метод для вывода информации о подписке текущего пользователя на курс."""
-        user = self.context["request"].user
-        subscription = (
-            Subscription.objects.all().filter(owner=user, course=course).exists()
-        )
-        if subscription:
-            return "У Вас есть подписка на данный курс."
-        return False
-
+    def get_count_subscriptions(self, obj): return "Подписок - 0."
 
 class DocNoPermissionSerializer(serializers.Serializer):
     detail = serializers.CharField(default="У вас нет права на это действие")
