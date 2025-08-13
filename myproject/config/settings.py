@@ -113,8 +113,7 @@ def env_required(key: str) -> str:
     return val
 
 
-# Тесты на sqlite — ОСТАВИМ только для 'test'
-if 'test' in sys.argv:
+if 'test' in sys.argv or 'migrate' in sys.argv:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

@@ -28,7 +28,7 @@ ENV POSTGRES_DB=os.getenv('POSTGRES_DB')
 ENV POSTGRES_USER=os.getenv('POSTGRES_USER')
 ENV POSTGRES_PASSWORD=os.getenv('POSTGRES_PASSWORD')
 ENV POSTGRES_HOST=os.getenv('POSTGRES_HOST')
-ENV DATABASE_URL=os.getenv('DATABASE_URL')
+
 ENV DEBUG=True
 
 # Создаем директорию для медиафайлов
