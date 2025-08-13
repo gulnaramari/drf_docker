@@ -2,120 +2,131 @@ name: Django CI
 
 on: [push, pull_request]
 
-
 jobs:
-
-
-
   lint:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8
-
-      - name: Run Flake8
-        run: flake8 . --ignore=W605,E501
+      - run: python -m pip install --upgrade pip
+      - run: pip install flake8
+      - run: flake8 . --ignore=W605,E501
 
   test:
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Cache pip
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-    
-
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        pip install -r myproject/requirements.txt
-
-    - name: Run migrations
-      env:
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-      run: python myproject/manage.py migrate
-
-
-    - name: Run tests
-      env:
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        POSTGRES_DB: ${{ secrets.NAME }}
-        POSTGRES_USER: ${{ secrets.USER }}
-        POSTGRES_PASSWORD: ${{ secrets.PASSWORD }}
-        DATABASE_URL: ${{ secrets.HOST }}
-
-      run: python myproject/manage.py test
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        # Подождём, пока БД станет готова
+        options: >-
+          --health-cmd="pg_isready -U app -d app"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }} ./myproject
-
-      - name: Push Docker image to Docker Hub
-        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - uses: actions/setup-python@v4
         with:
-          ssh-private-key: ${{ secrets.SSH_KEY }}
+          python-version: '3.10'
 
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Create .env file
-        uses: SpicyPizza/create-envfile@v2
+      - name: Cache pip
+        uses: actions/cache@v3
         with:
-          envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          envkey_POSTGRES_DB: ${{ secrets.NAME }}
-          envkey_POSTGRES_USER: ${{ secrets.USER }}
-          envkey_POSTGRES_PASSWORD: ${{ secrets.PASSWORD }}
-          envkey_DATABASE_URL: ${{ secrets.HOST }}
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-
-
-      - name: Deploy to Server
+      - name: Install dependencies
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            sudo docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
-            sudo docker stop drf_docker || true
-            sudo docker rm drf_docker || true
-            sudo docker run -d --name drf_docker -p 80:8000 ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
-          EOF
+          python -m pip install --upgrade pip
+          pip install -r myproject/requirements.txt
+          
+
+      - name: Run migrations (Postgres)
+        working-directory: myproject
+        env:
+           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+           DEBUG: "True"
+           POSTGRES_DB: app
+           POSTGRES_USER: app
+           POSTGRES_PASSWORD: secret
+           POSTGRES_HOST: "127.0.0.1"
+           POSTGRES_PORT: "5432"
+        run: python manage.py migrate --noinput
+
+        # Тесты (у тебя 'test' => sqlite; это ок)
+      - name: Run tests
+        working-directory: myproject
+        env:
+           SECRET_KEY: ${{ secrets.SECRET_KEY }}
+           DEBUG: "True"
+        run: python manage.py test
+
+    build:
+        runs-on: ubuntu-latest
+        needs: test
+        steps:
+          - uses: actions/checkout@v3
+
+          - name: Log in to Docker Hub
+            run: echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+
+          - name: Build Docker image
+            run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }} ./myproject
+
+          - name: Push Docker image
+            run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+          - uses: webfactory/ssh-agent@v0.9.0
+            with:
+              ssh-private-key: ${{ secrets.SSH_KEY }}
+
+          - uses: actions/checkout@v3
+
+          # Сгенерим .env, но с правильными ключами POSTGRES_* и REDIS_URL
+          - name: Create .env file
+            uses: SpicyPizza/create-envfile@v2
+            with:
+              envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
+              envkey_DEBUG: "False"
+              envkey_POSTGRES_DB: ${{ secrets.NAME }}
+              envkey_POSTGRES_USER: ${{ secrets.USER }}
+              envkey_POSTGRES_PASSWORD: ${{ secrets.PASSWORD }}
+              envkey_POSTGRES_HOST: "db"
+              envkey_POSTGRES_PORT: "5432"
+              envkey_REDIS_URL: "redis://redis:6379/1"
+
+
+          # Копируем compose и .env на сервер
+          - name: Copy files to server
+            run: |
+              scp -o StrictHostKeyChecking=no docker-compose.yaml ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/docker-compose.yaml
+              scp -o StrictHostKeyChecking=no .env ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/.env
+
+          # Деплой через docker compose (поднимет web+db+redis)
+          - name: Deploy via SSH
+            run: |
+              IMAGE=${{ secrets.DOCKER_HUB_USERNAME }}/drf_docker:${{ github.sha }}
+              ssh ... << EOF
+                export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
+                export IMAGE_TAG=${{ github.sha }}
+                docker compose pull
+                docker compose up -d
+              EOF
+              
