@@ -102,11 +102,13 @@ SPECTACULAR_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
 def env_required(key: str) -> str:
     val = os.getenv(key)
     if not val:
         raise RuntimeError(f"Missing env var: {key}")
     return val
+
 
 # Тесты на sqlite — ОСТАВИМ только для 'test'
 if 'test' in sys.argv:
