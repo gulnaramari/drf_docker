@@ -60,7 +60,7 @@ jobs:
           POSTGRES_PASSWORD: secret
           POSTGRES_HOST: "127.0.0.1"
           POSTGRES_PORT: "5432"
-        run: python manage.py migrate --noinput
+        run: python myproject/manage.py migrate --noinput
 
       # Тесты у тебя идут на SQLite (по условию 'test' в sys.argv) — это ок.
       - name: Run tests
@@ -68,7 +68,7 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           DEBUG: "True"
-        run: python manage.py test
+        run: python myproject/manage.py test
 
   build:
     runs-on: ubuntu-latest
@@ -88,6 +88,7 @@ jobs:
     concurrency:
       group: prod-deploy
       cancel-in-progress: true
+
     steps:
       - uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -95,18 +96,28 @@ jobs:
 
       - uses: actions/checkout@v3
 
+      # Генерим .env для сервера (web/db/redis/celery его прочитают через env_file: .env)
       - name: Create .env file
         uses: SpicyPizza/create-envfile@v2
         with:
           envkey_SECRET_KEY: ${{ secrets.SECRET_KEY }}
           envkey_DEBUG: "False"
-          # Лучше хранить именно эти секреты (см. ниже):
+
+          # Postgres (секреты так и назови в репозитории: POSTGRES_DB/USER/PASSWORD)
           envkey_POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           envkey_POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           envkey_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           envkey_POSTGRES_HOST: "db"
           envkey_POSTGRES_PORT: "5432"
+
+          # Redis / Celery
           envkey_REDIS_URL: "redis://redis:6379/1"
+          envkey_CELERY_BROKER_URL: "redis://redis:6379/0"
+          envkey_CELERY_RESULT_BACKEND: "redis://redis:6379/2"
+
+          # Рекомендуется задать эти секреты в настройках репо
+          envkey_ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          envkey_CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
 
       - name: Copy files to server
         run: |
@@ -116,14 +127,24 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            set -e
+            set -euo pipefail
             cd ~
+          
+            # переменные для image substitution в compose
             export DOCKER_HUB_USERNAME='${{ secrets.DOCKER_HUB_USERNAME }}'
             export IMAGE_TAG='${{ github.sha }}'
-            
-            docker login -u "$DOCKER_HUB_USERNAME" -p '${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}' || true
-            docker compose pull
-            docker compose down --remove-orphans
-            docker compose up -d
-            docker compose ps
+          
+            # логинимся на случай приватного образа
+            echo '${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}' | sudo docker login -u '${{ secrets.DOCKER_HUB_USERNAME }}' --password-stdin || true
+          
+            # тянем образы и поднимаем стэк
+            sudo docker compose pull
+            sudo docker compose up -d --remove-orphans
+          
+            # миграции и статика (в отдельном одноразовом контейнере web)
+            sudo docker compose run --rm web python manage.py migrate --noinput
+            sudo docker compose run --rm web python manage.py collectstatic --noinput
+          
+            # посмотреть статусы
+            sudo docker compose ps
           EOF

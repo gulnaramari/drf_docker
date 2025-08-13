@@ -1,17 +1,6 @@
 version: '3.9'
-services:
-  web:
-    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
-    env_file: .env
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    ports:
-      - "80:8000"
-    command: python manage.py runserver 0.0.0.0:8000
 
+services:
   db:
     image: postgres:16
     env_file: .env
@@ -22,15 +11,58 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1"]
       interval: 5s
       timeout: 3s
       retries: 20
+    restart: unless-stopped
 
   redis:
     image: redis:7
     command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "80:8000"
+    # Для продакшена лучше так:
+    # command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
+
+  celery:
+    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config.celery worker --loglevel=info
+    restart: unless-stopped
+
+  celery_beat:
+    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    command: celery -A config.celery beat --loglevel=info
+    restart: unless-stopped
 
 volumes:
   pgdata:
-
