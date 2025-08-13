@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   db:
     image: postgres:16
@@ -36,7 +34,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "80:8000"
+      - "8080:8000"
     # Для продакшена лучше так:
     # command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60
     command: python manage.py runserver 0.0.0.0:8000

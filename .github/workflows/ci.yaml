@@ -105,6 +105,7 @@ jobs:
           envkey_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           envkey_IMAGE_TAG: ${{ github.sha }}
 
+
           # Postgres (секреты так и назови в репозитории: POSTGRES_DB/USER/PASSWORD)
           envkey_POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           envkey_POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -136,6 +137,7 @@ jobs:
           
             # тянем образы и поднимаем стэк
             sudo docker compose pull
+            sudo docker compose down --remove-orphans
             sudo docker compose up -d --remove-orphans
           
             # миграции и статика (в отдельном одноразовом контейнере web)
