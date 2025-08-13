@@ -46,11 +46,14 @@ class CourseSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         ]
 
-    def get_amount_of_lessons(self, obj): return obj.lessons.count()
+    def get_amount_of_lessons(self, obj):
+        return obj.lessons.count()
 
-    def get_is_subscribed(self, obj): return False
+    def get_is_subscribed(self, obj):
+        return False
 
-    def get_count_subscriptions(self, obj): return "Подписок - 0."
+    def get_count_subscriptions(self, obj):
+        return "Подписок - 0."
 
 
 class DocNoPermissionSerializer(serializers.Serializer):

@@ -14,7 +14,7 @@ class URLValidator:
     def __fields__(self):
         return [self.field]
 
-    def validate_video_url(self, value):
+    def __call__(self, value):
         if not value:
             return value
         host = (urlparse(value).hostname or "").lower()
