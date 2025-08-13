@@ -35,7 +35,7 @@ class CourseSerializer(serializers.ModelSerializer):
     с дополнительными полями и вложенным сериализатором по лекции"""
 
     amount_of_lessons = serializers.SerializerMethodField(read_only=True)
-    lessons = LessonSerializer(read_only=True, many=True)
+    lesson = LessonSerializer(read_only=True, many=True)
     is_subscribed = serializers.SerializerMethodField(read_only=True)
     count_subscriptions = serializers.SerializerMethodField(read_only=True)
 
