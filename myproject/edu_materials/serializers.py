@@ -45,21 +45,31 @@ class CourseSerializer(serializers.ModelSerializer):
     с дополнительными полями и вложенным сериализатором по лекции"""
 
     amount_of_lessons = serializers.SerializerMethodField(read_only=True)
-    lesson = LessonSerializer(read_only=True, many=True)
+    lesson = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField(read_only=True)
     count_subscriptions = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Course
         fields = [
-            "id", "amount_of_lessons", "lesson",
-            "is_subscribed", "count_subscriptions",
+            "id",
+            "amount_of_lessons",
+            "lesson",
+            "is_subscribed",
+            "count_subscriptions",
             "name", "preview", "description", "owner",
             "created_at", "updated_at",
         ]
 
     def get_amount_of_lessons(self, obj):
-        return obj.lessons.count()
+        # Берём менеджер обратной связи независимо от related_name
+        manager = getattr(obj, "lessons", None) or getattr(obj, "lesson", None) or obj.lesson_set
+        return manager.count()
+
+    def get_lesson(self, obj):
+        manager = getattr(obj, "lessons", None) or getattr(obj, "lesson", None) or obj.lesson_set
+        qs = manager.all().order_by("id")
+        return LessonSerializer(qs, many=True).data
 
     def get_is_subscribed(self, obj):
         return False
