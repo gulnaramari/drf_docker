@@ -1,9 +1,8 @@
+from urllib.parse import urlparse
+from django.conf import settings
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
-
 from .models import Course, Lesson
-from .validators import URLValidator
-from users.models import Subscription
 
 
 @extend_schema_serializer(
@@ -22,12 +21,23 @@ from users.models import Subscription
     ]
 )
 class LessonSerializer(serializers.ModelSerializer):
-    """Создание сериализатора для модели лекции"""
-
     class Meta:
         model = Lesson
-        fields = "__all__"
-        validators = [URLValidator(field="video_url")]
+        fields = [
+            "id", "name", "description", "preview", "video_url",
+            "course", "owner", "created_at", "updated_at",
+        ]
+
+    def validate_video_url(self, value):
+        # допускаем пустое значение
+        if not value:
+            return value
+        host = (urlparse(value).hostname or "").lower()
+        allowed = getattr(settings, "ALLOWED_LESSON_DOMAINS", ("youtube.com",))
+        # разрешаем поддомены, например www.youtube.com
+        if not any(host == d or host.endswith("." + d) for d in allowed):
+            raise serializers.ValidationError("Допустимы ссылки только на youtube.com")
+        return value
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -35,33 +45,37 @@ class CourseSerializer(serializers.ModelSerializer):
     с дополнительными полями и вложенным сериализатором по лекции"""
 
     amount_of_lessons = serializers.SerializerMethodField(read_only=True)
-    lessons = LessonSerializer(read_only=True, many=True)
+    lesson = serializers.SerializerMethodField()
     is_subscribed = serializers.SerializerMethodField(read_only=True)
     count_subscriptions = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        """Класс для изменения поведения полей сериализатора модели "Курс"."""
-
         model = Course
-        fields = "__all__"
+        fields = [
+            "id",
+            "amount_of_lessons",
+            "lesson",
+            "is_subscribed",
+            "count_subscriptions",
+            "name", "preview", "description", "owner",
+            "created_at", "updated_at",
+        ]
 
-    def get_amount_of_lessons(self, course):
-        """Метод для вывода информации о количестве уроков в курсе."""
-        return Lesson.objects.filter(course=course).count()
+    def get_amount_of_lessons(self, obj):
+        # Берём менеджер обратной связи независимо от related_name
+        manager = getattr(obj, "lessons", None) or getattr(obj, "lesson", None) or obj.lesson_set
+        return manager.count()
 
-    def get_count_subscriptions(self, instance):
-        """Метод для вывода информации о количестве подписок на курс."""
-        return f"Подписок - {Subscription.objects.filter(course=instance).count()}."
+    def get_lesson(self, obj):
+        manager = getattr(obj, "lessons", None) or getattr(obj, "lesson", None) or obj.lesson_set
+        qs = manager.all().order_by("id")
+        return LessonSerializer(qs, many=True).data
 
-    def get_is_subscribed(self, course):
-        """Метод для вывода информации о подписке текущего пользователя на курс."""
-        user = self.context["request"].user
-        subscription = (
-            Subscription.objects.all().filter(owner=user, course=course).exists()
-        )
-        if subscription:
-            return "У Вас есть подписка на данный курс."
+    def get_is_subscribed(self, obj):
         return False
+
+    def get_count_subscriptions(self, obj):
+        return "Подписок - 0."
 
 
 class DocNoPermissionSerializer(serializers.Serializer):

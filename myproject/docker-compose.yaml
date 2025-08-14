@@ -1,86 +1,66 @@
-version: '3.9'
-
-
 services:
-
-
-  drf:
-    build: .
-
-    command:
-        python manage.py migrate
-        python manage.py csu
-        python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
-      - static_volume:/code/static
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    env_file:
-      - ./.env
-
   db:
-    image: postgres:15
+    image: postgres:16
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - db_data:/var/lib/postgresql/data
-    env_file:
-      - ./.env
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
 
   redis:
-    image: redis
-    volumes:
-      - .:/app
-      - redis_data:/app/data/redis
-    env_file:
-      - ./.env
-    ports:
-      - "6379:6379"
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
-      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8000"
+    # Для продакшена лучше так:
+    # command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 60
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: unless-stopped
 
   celery:
-    build: .
-    command:
-      - /bin/sh
-      - -c
-      - |
-        celery -A config.celery worker --loglevel=info --pool=solo
-        docker-compose exec celery python manage.py shell -c "from users.tasks import test_add; test_add.delay(2,5)"
-    volumes:
-      - .:/app
-    env_file:
-      - ./.env
+    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
+    env_file: .env
     depends_on:
-      - db
-      - redis
-      - drf
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config.celery worker --loglevel=info
+    restart: unless-stopped
 
   celery_beat:
-    build: .
-    command: >
-      bash -c "celery -A config beat --loglevel=info"
-    volumes:
-      - .:/app
-    env_file:
-      - ./.env
+    image: ${DOCKER_HUB_USERNAME:-youruser}/drf_docker:${IMAGE_TAG:-latest}
+    env_file: .env
     depends_on:
-      - db
-      - redis
-      - celery
-      - drf
-
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    command: celery -A config.celery beat --loglevel=info
+    restart: unless-stopped
 
 volumes:
-  db_data:
-  static_volume:
-  media_volume:
-  redis_data:
+  pgdata:
