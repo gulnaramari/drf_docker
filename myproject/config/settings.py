@@ -76,7 +76,10 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
 }
+
 
 # Настройки срока действия токенов
 SIMPLE_JWT = {
@@ -102,22 +105,31 @@ SPECTACULAR_SETTINGS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
+def env_required(key: str) -> str:
+    val = os.getenv(key)
+    if not val:
+        raise RuntimeError(f"Missing env var: {key}")
+    return val
+
+
 if 'test' in sys.argv or 'migrate' in sys.argv:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": 'test.sqlite3'
+            "NAME": BASE_DIR / "test.sqlite3",
         }
     }
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
-            "NAME": os.getenv("NAME"),
-            "USER": os.getenv("USER"),
-            "PASSWORD": os.getenv("PASSWORD"),
-            "HOST": os.getenv("HOST"),
-            "PORT": os.getenv("PORT", default="5432"),
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env_required("POSTGRES_DB"),
+            "USER": env_required("POSTGRES_USER"),
+            "PASSWORD": env_required("POSTGRES_PASSWORD"),
+            "HOST": os.getenv("POSTGRES_HOST", "db"),  # TCP, НЕ сокет
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": 60,
         }
     }
 
@@ -172,11 +184,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-
-MEDIA_URL = "media/"
-
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-
 ALLOWED_LESSON_DOMAINS = ("youtube.com",)
 
 EMAIL_HOST = os.getenv("EMAIL_HOST")
@@ -208,15 +215,15 @@ CELERY_BEAT_SCHEDULE = (
     },
 )
 
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Redis cache
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://redis:6379/1',
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://redis:6379/1"),
     }
 }

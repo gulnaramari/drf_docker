@@ -23,7 +23,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     с правами для работы модераторов, немодераторов или владельцев курсов, лекций"""
 
     serializer_class = CourseSerializer
-    queryset = Course.objects.all()
+    queryset = Course.objects.all().order_by("id")
     pagination_class = LMSPagination
 
     def get_permissions(self):
